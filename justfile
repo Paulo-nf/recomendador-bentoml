@@ -86,3 +86,10 @@ curl-inexistente:
 
 slides:
     uv run python scripts/gerar_slides.py
+
+# ---------------------------------------------------------------------------
+# Fork da equipe 2
+# ---------------------------------------------------------------------------
+
+testes:
+    uv run pytest test_service.py -v
