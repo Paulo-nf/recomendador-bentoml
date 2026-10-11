@@ -1,3 +1,43 @@
+# Projeto Integrador, Módulo de Recomendação
+
+Aqui no top do README está as informações especificas do fork
+
+## Equipe
+
+Equipe FolcStore, ADS Regular, 4º período
+
+## Integrantes
+
+Luiz Felipe Matias Xavier<br>
+Heitor Didier Jalfim<br>
+Paulo Nery da Fonseca<br>
+Thomaz Barros Costa<br>
+
+## Instruções para subir
+
+```bash
+just treino    # lê dados/catalogo.json, grava o modelo no store do BentoML
+just serve     # sobe o serviço (deixe este terminal aberto)
+```
+
+## Instruções para tester
+
+```bash
+# TODO: Três casos de teste prontos para copiar/colar: Para os 3 novos endpoints, incluir o comando exato em curl (apontando para a porta 3000) e o bloco JSON da resposta esperada logo abaixo de cada um.
+
+
+just testes  # realiza todos os testes em test_service.py
+```
+
+
+## Tabela Requisitos/Endpoint
+
+| Funcionalidade | Requisitos | Endpoint | Tipo
+| --- | --- | --- | --- |
+| **Recomendações personalizadas para a home** | (RF01, RF05, RF10, RF12) | `/v1/recommendations/home` | POST |
+| **Insights para o artesão** | (RF08, com RF09 como dependência) | `/v1/recommendations/seller` | POST |
+| **Registro de eventos e feedback** | (RF04, RF11) | `/v1/events` | POST |
+
 # Recomendador no BentoML
 
 Imagine uma feira de artesanato na internet. Tem jarro de barro, renda, xilogravura,
