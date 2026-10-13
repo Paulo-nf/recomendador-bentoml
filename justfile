@@ -93,3 +93,18 @@ slides:
 
 testes:
     uv run pytest test_service.py -v
+
+curl-teste-1:
+    curl -sS -X POST http://127.0.0.1:3000/v1/recommendations/home \
+      -H 'Content-Type: application/json' \
+      -d '{"user_id": "u_83921", "limit": 3}' | python3 -m json.tool
+
+curl-teste-2:
+    curl -sS -X POST http://127.0.0.1:3000/v1/recommendations/seller \
+      -H 'Content-Type: application/json' \
+      -d '{"artisan_id": "a_207", "limit": 3}' | python3 -m json.tool
+
+curl-teste-3:
+    curl -sS -X POST http://127.0.0.1:3000/v1/events \
+      -H 'Content-Type: application/json' \
+      -d '{"user_id": "u_83921", "event_type": "click", "product_id": "p_1042"}' | python3 -m json.tool

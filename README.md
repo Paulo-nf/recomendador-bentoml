@@ -22,10 +22,138 @@ just serve     # sobe o serviço (deixe este terminal aberto)
 
 ## Instruções para tester
 
+Com o serviço no ar (`just serve`), rode cada comando em outro terminal. Os
+mesmos comandos estão no `justfile` como `just curl-teste-1`, `just curl-teste-2`
+e `just curl-teste-3`.
+
+### Teste 1 — Recomendações personalizadas para a home (`/v1/recommendations/home`)
+
 ```bash
-# TODO: Três casos de teste prontos para copiar/colar: Para os 3 novos endpoints, incluir o comando exato em curl (apontando para a porta 3000) e o bloco JSON da resposta esperada logo abaixo de cada um.
+curl -sS -X POST http://127.0.0.1:3000/v1/recommendations/home \
+  -H 'Content-Type: application/json' \
+  -d '{"user_id": "u_83921", "limit": 3}' | python3 -m json.tool
+```
 
+Resposta esperada:
 
+```json
+{
+    "strategy": "hybrid",
+    "fallback_used": false,
+    "items": [
+        {
+            "product_id": "p_1042",
+            "artisan_id": "a_207",
+            "score": 0.91,
+            "reason": {
+                "code": "BOUGHT_SIMILAR_CATEGORY",
+                "text": "Porque você comprou peças de cerâmica"
+            }
+        },
+        {
+            "product_id": "p_0877",
+            "artisan_id": "a_113",
+            "score": 0.87,
+            "reason": {
+                "code": "FOLLOWED_ARTISAN",
+                "text": "Porque você segue este artesão"
+            }
+        },
+        {
+            "product_id": "p_2210",
+            "artisan_id": "a_309",
+            "score": 0.79,
+            "reason": {
+                "code": "TRENDING",
+                "text": "Em alta na plataforma"
+            }
+        }
+    ],
+    "model_version": "mock-0.0.1",
+    "latency_ms": 12
+}
+```
+
+### Teste 2 — Insights para o artesão (`/v1/recommendations/seller`)
+
+```bash
+curl -sS -X POST http://127.0.0.1:3000/v1/recommendations/seller \
+  -H 'Content-Type: application/json' \
+  -d '{"artisan_id": "a_207", "limit": 3}' | python3 -m json.tool
+```
+
+Resposta esperada:
+
+```json
+{
+    "artisan_id": "a_207",
+    "resumo_vendas": {
+        "produtos": 4,
+        "total_vendas": 100,
+        "conversao_media": 0.0192
+    },
+    "preco_sugerido": {
+        "product_id": "p_1042",
+        "preco_atual": 89.9,
+        "faixa_sugerida": {
+            "min": 94.4,
+            "max": 112.38
+        },
+        "motivo": "Peças similares no marketplace vendem em média 18% acima"
+    },
+    "tags_com_mais_sucesso": [
+        {
+            "tag": "parede",
+            "taxa_conversao": 0.0387,
+            "score_sucesso": 0.39,
+            "buscas_7d_marketplace": 1322
+        },
+        {
+            "tag": "decoracao-rustica",
+            "taxa_conversao": 0.0317,
+            "score_sucesso": 0.32,
+            "buscas_7d_marketplace": 2829
+        },
+        {
+            "tag": "vaso",
+            "taxa_conversao": 0.028,
+            "score_sucesso": 0.28,
+            "buscas_7d_marketplace": 1048
+        }
+    ],
+    "produtos_potencial_conversao": [
+        {
+            "product_id": "p_0877",
+            "nome": "Jogo de xícaras artesanais",
+            "conversao": 0.0039,
+            "motivo": "Muitas visualizações e poucas compras: revise fotos, descrição ou preço"
+        }
+    ],
+    "model_version": "mock-tags-0.0.1"
+}
+```
+
+### Teste 3 — Registro de eventos e feedback (`/v1/events`)
+
+```bash
+curl -sS -X POST http://127.0.0.1:3000/v1/events \
+  -H 'Content-Type: application/json' \
+  -d '{"user_id": "u_83921", "event_type": "click", "product_id": "p_1042"}' | python3 -m json.tool
+```
+
+Resposta esperada (`received_at` muda a cada chamada: é o horário UTC do servidor):
+
+```json
+{
+    "status": "accepted",
+    "event_id": "evt_99812",
+    "received_at": "2026-10-13T17:36:11.807790+00:00"
+}
+```
+
+### Testes automatizados
+
+```bash
 just testes  # realiza todos os testes em test_service.py
 ```
 
@@ -503,7 +631,9 @@ Em outro terminal, ou pela UI em <http://127.0.0.1:3000>:
 
 ### Exemplo 1 — página do jarro (`p01`), quatro sugestões
 
-É o caso trabalhado em [`material/calculos-trabalhados.md`](material/calculos-trabalhados.md).
+É o caso trabalhado em [`material/calculos-trabalhados.md`](material/calculos-trabalhados.md)
+(as contas de lá usam o catálogo original de 12 produtos; os valores abaixo já
+refletem o catálogo expandido).
 
 ```bash
 just curl-exemplo
@@ -520,12 +650,15 @@ Resultado esperado (ordem e motivos):
 | rank | produto | reason | score (aprox.) |
 | ---: | --- | --- | ---: |
 | 1 | Prato esmaltado Tracunhaém (`p02`) | `mesma_tecnica` | ≈ 0,77 |
-| 2 | Boneca de barro (`p03`) | `mesma_tecnica` | ≈ 0,52 |
-| 3 | Rendeira Alto do Moura (`p04`) | `complemento_popularidade` | ≈ 0,42 |
-| 4 | Xilogravura Pilar (`p07`) | `complemento_popularidade` | ≈ 0,37 |
+| 2 | Vaso de barro Alto do Moura (`p13`) | `mesma_tecnica` | ≈ 0,48 |
+| 3 | Boneca de barro (`p03`) | `mesma_tecnica` | ≈ 0,47 |
+| 4 | Boneco de barro figurativo (`p14`) | `mesma_tecnica` | ≈ 0,41 |
 
-`complemento_usado` deve ser **true**: só existem duas outras cerâmicas no catálogo,
-então as duas últimas vagas vêm dos mais pedidos do catálogo inteiro.
+`complemento_usado` deve ser **false**: o catálogo tem seis outras cerâmicas
+(`p02`, `p03`, `p13`, `p14`, `p15`, `p38`), então as quatro vagas saem da mesma
+técnica. Repare que `p13` e `p14` têm os mesmos 20 pedidos, mas `p13` saiu junto
+com o jarro em duas cestas e `p14` em uma só: a co-ocorrência separa os dois, e
+`p03` (19 pedidos, também duas cestas com o jarro) fica entre eles.
 
 ### Exemplo 2 — forçar o complemento (pouca mesma técnica)
 
@@ -539,10 +672,25 @@ Corpo:
 {"produto_na_pagina": "p12", "limite": 4, "excluir": ["p10", "p11"]}
 ```
 
-Aqui o produto da página é o sousplat de palha (`p12`, cestaria). Excluímos os outros
-dois de cestaria (`p10`, `p11`). Sobram **zero** candidatos da mesma técnica → a lista
-inteira tende a ser preenchida por popularidade geral (`reason` =
-`complemento_popularidade`, `complemento_usado`: true).
+Aqui o produto da página é o sousplat de palha (`p12`, cestaria). Excluímos dois
+outros de cestaria (`p10`, `p11`). Sobram só **dois** candidatos da mesma técnica
+(`p34`, `p35`), menos que o `limite` de 4 → as duas últimas vagas vêm dos mais
+pedidos do catálogo inteiro (`complemento_usado`: true).
+
+| rank | produto | reason | score (aprox.) |
+| ---: | --- | --- | ---: |
+| 1 | Chapéu de palha (`p35`) | `mesma_tecnica` | ≈ 0,32 |
+| 2 | Esteira de palha (`p34`) | `mesma_tecnica` | ≈ 0,07 |
+| 3 | Jarro barro Tracunhaém (`p01`) | `complemento_popularidade` | ≈ 0,50 |
+| 4 | Xilogravura Bezerros (`p22`) | `complemento_popularidade` | ≈ 0,45 |
+
+O `rank` não segue o `score` aqui: os itens da mesma técnica vêm sempre primeiro,
+e o complemento só entra depois deles, mesmo com nota maior. Como `p12` não
+aparece em nenhuma cesta, a co-ocorrência é zero e a nota dos dois primeiros é
+só `0,7 × pop`.
+
+Para ver o complemento preencher a lista **inteira**, use `just curl-tecnica-unica`
+(`p31`, único produto de funilaria).
 
 ### Exemplo 3 — id que não existe
 
@@ -690,7 +838,7 @@ não usa região na ordenação**.
 
 | Arquivo | Papel |
 | --- | --- |
-| [`dados/catalogo.json`](dados/catalogo.json) | 12 produtos + cestas de exemplo |
+| [`dados/catalogo.json`](dados/catalogo.json) | 40 produtos (10 técnicas) + 37 cestas de exemplo |
 | [`treino.py`](treino.py) | Calcula popularidade e co-ocorrência; grava pickle no model store (`recomendador:…`) |
 | [`service.py`](service.py) | Classe BentoML `Recomendador`; API `recomendar` |
 | [`bentofile.yaml`](bentofile.yaml) | Empacote opcional: o que entra no Bento / imagem |
